@@ -767,25 +767,11 @@ function HostScreen({ questions, settings, onExit }) {
   const state = useGameState();
   const [countdown, setCountdown] = useState(0);
   const tickRef = useRef();
-  const botRef = useRef();
 
   useEffect(() => {
     gameState.activateHost(questions, settings);
     return () => gameState.reset();
   }, []);
-
-  // Bots
-  useEffect(() => {
-    if (state.phase !== 'lobby') return;
-    botRef.current = setInterval(() => {
-      if (gameState.players.length >= 20) return;
-      const name = NAMES_POOL[Math.floor(Math.random() * NAMES_POOL.length)] +
-        (Math.random() < 0.3 ? Math.floor(Math.random() * 99) : '');
-      gameState.addPlayer(name);
-      if (settings.soundEffects) sounds.join();
-    }, 800);
-    return () => clearInterval(botRef.current);
-  }, [state.phase]);
 
   // Timer
   useEffect(() => {
@@ -801,21 +787,6 @@ function HostScreen({ questions, settings, onExit }) {
     return () => clearInterval(tickRef.current);
   }, [state.phase, state.paused]);
 
-  // Bot answers
-  useEffect(() => {
-    if (state.phase !== 'question') return;
-    const q = state.currentQuestion; if (!q) return;
-    gameState.players.forEach(p => {
-      if (gameState.answers[p.id]) return;
-      const delay = 800 + Math.random() * (q.time * 1000 - 1500);
-      setTimeout(() => {
-        if (gameState.phase === 'question' && !gameState.answers[p.id] && !gameState.paused) {
-          const choice = Math.random() < 0.7 ? q.correct : Math.floor(Math.random() * 4);
-          gameState.submitAnswer(p.id, choice);
-        }
-      }, delay);
-    });
-  }, [state.phase, state.qIdx]);
 
   // Reveal → scores
   useEffect(() => {
@@ -957,7 +928,7 @@ function RealQR({ value, size = 120 }) {
 
 function LobbyView({ players, onStart, onKick, gameCode }) {
   // Build join URL: use current page URL + code param so QR actually works
-  const joinUrl = `${window.location.href.split('?')[0]}?join=${gameCode}`;
+  const joinUrl = `${window.location.origin}${window.location.pathname}?join=${gameCode}`;
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, maxWidth: 900, margin: '0 auto' }}>
@@ -1812,5 +1783,7 @@ function DemoHostPane({ questions, settings }) {
         {state.phase === 'finished' && <FinishedView players={topPlayers} onExit={() => {}} onExport={() => {}} />}
       </div>
     </div>
+  );
+}
   );
 }
