@@ -743,6 +743,3 @@ function PlayerScreen({ settings, onExit }) {
 
   return null;
 }
-}
-  );
-}
